@@ -1,0 +1,3 @@
+docker/influxdb/data
+docker/prometheus/data
+docker/thanos/receiver/data

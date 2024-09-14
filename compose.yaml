@@ -1,0 +1,107 @@
+name: squid-stack
+
+services:
+  squid:
+    image: ubuntu/squid
+    container_name: squid
+    restart: always
+    ports:
+      - "3128:3128"
+    environment:
+      TZ: UTC
+    volumes:
+      - ./docker/squid-proxy/squid.conf:/etc/squid/squid.conf
+
+  squid-exporter:
+    image: boynux/squid-exporter
+    container_name: squid-exporter
+    hostname: squid-exporter
+    restart: always
+    ports:
+      - "9301:9301"
+    networks:
+      default:
+        ipv4_address: "10.0.54.10"
+    environment:
+      TZ: UTC
+      SQUID_HOSTNAME: "squid"
+      SQUID_PORT: "3128"
+      SQUID_EXPORTER_LISTEN: ":9301"
+
+  prometheus:
+    image: prom/prometheus
+    user: root
+    restart: unless-stopped
+    volumes:
+    - ./docker/prometheus/config:/etc/prometheus
+    command:
+    - '--config.file=/etc/prometheus/prometheus.yml'
+    - '--enable-feature=agent'
+    ports:
+      - "9090:9090"
+
+  # influxdb:
+  #   image: influxdb:1.8
+  #   ports:
+  #     - 8086:8086
+  #   volumes:
+  #     - ./docker/influxdb/data:/var/lib/influxdb
+  #     - ./docker/influxdb/config:/etc/influxdb
+
+  # telegraf:
+  #   image: telegraf:1.30
+  #   networks:
+  #     default:
+  #       ipv4_address: "10.0.54.20"
+  #   volumes:
+  #     - ./docker/telegraf/config/telegraf.conf:/etc/telegraf/telegraf.conf:ro
+  #   environment: {}
+  #   depends_on:
+  #     - influxdb
+
+  thanos-receiver:
+    image:  quay.io/thanos/thanos:v0.28.0
+    ports:
+      - "10901:10901"
+      - "10902:10902"
+      - "19291:19291"
+    volumes:
+      - ./docker/thanos/receiver/data:/data
+    command: >
+      receive
+      --tsdb.path=/data 
+      --grpc-address=0.0.0.0:10901
+      --http-address=0.0.0.0:10902
+      --remote-write.address=0.0.0.0:19291
+      --label=receiver_replica=\"0\"
+      --label=receiver_cluster=\"localhost\"
+
+  thanos-query:
+    image:  quay.io/thanos/thanos:v0.28.0
+    ports:
+      - "10900:10900"
+    command: >
+      query
+      --http-address=0.0.0.0:10900
+      --store=thanos-receiver:10901
+
+  # grafana:
+  #   image: grafana/grafana
+  #   restart: unless-stopped
+  #   environment:
+  #     GF_AUTH_ANONYMOUS_ENABLED: true
+  #     GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+  #     GF_SECURITY_DISABLE_LOGIN_FORM: true
+  #   volumes:
+  #     - ./docker/grafana/datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml
+  #     - ./docker/grafana/dashboards:/etc/grafana/provisioning/dashboards
+  #     - ./docker/grafana/dashboards.yml:/etc/grafana/provisioning/dashboards/dashboards.yml
+  #   ports:
+  #     - "3000:3000"
+
+networks:
+  default:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.0.54.0/24
