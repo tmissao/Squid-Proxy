@@ -1,6 +1,11 @@
 name: squid-stack
 
 services:
+  server:
+    image: debian:bullseye-slim
+    container_name: server
+    command: tail -f /dev/null
+
   squid:
     image: ubuntu/squid
     container_name: squid
@@ -11,6 +16,7 @@ services:
       TZ: UTC
     volumes:
       - ./docker/squid-proxy/squid.conf:/etc/squid/squid.conf
+      - ./docker/squid-proxy/passwords:/etc/squid/passwd
 
   squid-exporter:
     image: boynux/squid-exporter
@@ -40,25 +46,6 @@ services:
     ports:
       - "9090:9090"
 
-  # influxdb:
-  #   image: influxdb:1.8
-  #   ports:
-  #     - 8086:8086
-  #   volumes:
-  #     - ./docker/influxdb/data:/var/lib/influxdb
-  #     - ./docker/influxdb/config:/etc/influxdb
-
-  # telegraf:
-  #   image: telegraf:1.30
-  #   networks:
-  #     default:
-  #       ipv4_address: "10.0.54.20"
-  #   volumes:
-  #     - ./docker/telegraf/config/telegraf.conf:/etc/telegraf/telegraf.conf:ro
-  #   environment: {}
-  #   depends_on:
-  #     - influxdb
-
   thanos-receiver:
     image:  quay.io/thanos/thanos:v0.28.0
     ports:
@@ -69,7 +56,7 @@ services:
       - ./docker/thanos/receiver/data:/data
     command: >
       receive
-      --tsdb.path=/data 
+      --tsdb.path=/data
       --grpc-address=0.0.0.0:10901
       --http-address=0.0.0.0:10902
       --remote-write.address=0.0.0.0:19291
@@ -85,19 +72,19 @@ services:
       --http-address=0.0.0.0:10900
       --store=thanos-receiver:10901
 
-  # grafana:
-  #   image: grafana/grafana
-  #   restart: unless-stopped
-  #   environment:
-  #     GF_AUTH_ANONYMOUS_ENABLED: true
-  #     GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
-  #     GF_SECURITY_DISABLE_LOGIN_FORM: true
-  #   volumes:
-  #     - ./docker/grafana/datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml
-  #     - ./docker/grafana/dashboards:/etc/grafana/provisioning/dashboards
-  #     - ./docker/grafana/dashboards.yml:/etc/grafana/provisioning/dashboards/dashboards.yml
-  #   ports:
-  #     - "3000:3000"
+  grafana:
+    image: grafana/grafana
+    restart: unless-stopped
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: true
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+      GF_SECURITY_DISABLE_LOGIN_FORM: true
+    volumes:
+      - ./docker/grafana/datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml
+      - ./docker/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./docker/grafana/dashboards.yml:/etc/grafana/provisioning/dashboards/dashboards.yml
+    ports:
+      - "3000:3000"
 
 networks:
   default:
