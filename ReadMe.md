@@ -16,6 +16,10 @@ The Key Features of Squid are:
 
 5. `Bandwidth Management`: Squid helps in limiting and managing bandwidth usage through rate limiting, allowing network administrators to control traffic flow.
 
+## When to Use
+
+Use Squid if your primary need is caching, content filtering, or bandwidth control. Squid is highly optimized for serving frequently requested content quickly and saving bandwidth by caching.
+
 ## Architecture
 ---
 
