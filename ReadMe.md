@@ -19,6 +19,8 @@ The Key Features of Squid are:
 ## Architecture
 ---
 
+![Architecture](./artifacts/architecture.png)
+
 This application set up a squid proxy, with the following [configuration](./docker/squid-proxy/squid.conf)
 
 - Just allow localhost and the IP **10.0.54.10/32** (squid proxy) to access squid proxy manager url
