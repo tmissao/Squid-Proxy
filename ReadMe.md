@@ -70,6 +70,8 @@ docker compose up -d
 # -I = fetch headers only (to avoid verbosity)
 # -L = follow any redirects until it reaches the final destination
 
+curl -I -L http://google.com
+
 # Request allowed (statusCode = 200)
 curl -x http://localhost:3128 -I -L http://duckduckgo.com
 
@@ -84,8 +86,17 @@ curl -x http://localhost:3128 --proxy-user tmissao:12345ate8 -I -L http://gmail.
 
 ```
 
+## Monitoring
+
+In order to monitor Squid Proxy the following grafana dashboard, accessing the following [link](http://localhost:3000/d/squidproxy/squid-proxy?orgId=1). To access the link make sure the entire project stack is up and running using Docker Compose.
+
+![Dashboard](./artifacts/monitoring.png)
+
+
 ## Results
 ---
+
+![Demo](./artifacts/demo.gif)
 
 ## References
 ---
